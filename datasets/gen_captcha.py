@@ -9,6 +9,8 @@ import uuid
 from captcha.image import ImageCaptcha
 
 import itertools
+from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import random
 
 FLAGS = None
 META_FILENAME = 'meta.json'
@@ -29,12 +31,14 @@ def _gen_captcha(img_dir, num_per_image, n, width, height, choices, max_images_c
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
-    image = ImageCaptcha(width=width, height=height)
+#     image = ImageCaptcha(width=width, height=height,  font_sizes=[24, 24, 24, 24])
 
     remain_count = max_images_count
     epoche_count = len(list(itertools.permutations(choices, num_per_image)))
 
     print('generating %s epoches of captchas in %s.' % (n, img_dir))
+
+    font = ImageFont.truetype('arial.ttf', size=20)
 
     for _ in range(n):
         samples = itertools.permutations(choices, num_per_image)
@@ -44,8 +48,39 @@ def _gen_captcha(img_dir, num_per_image, n, width, height, choices, max_images_c
 
         for i in samples:
             captcha = ''.join(i)
+            captcha_text = " ".join(i)
             fn = os.path.join(img_dir, '%s_%s.png' % (captcha, uuid.uuid4()))
-            image.write(captcha, fn)
+#             image.write(captcha, fn)
+
+            # Create a new image with a white background
+            bg_color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+            # Create a new image with a white background
+            image = Image.new('RGB', (86, 37), color=bg_color)
+#             image = Image.new('RGB', (86, 37), color='white')
+
+            # Get a drawing context for the image
+            draw = ImageDraw.Draw(image)
+
+            x = 16
+            y = 8
+            for digit in i:
+                # Generate a random color for the digit
+                color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+                draw.text((x, y), str(digit), font=font, fill=color)
+                x += 14  # move the next digit over by the width of one digit
+
+#             draw.text((12, 7), captcha_text, font=font, fill=(0, 0, 0))
+            for i in range(200):
+                x = random.randint(0, 86)
+                y = random.randint(0, 37)
+                draw.point((x, y), fill=(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+
+            # Apply a blur filter to the image
+            blur_radius = 0.5
+            image = image.filter(ImageFilter.GaussianBlur(blur_radius))
+
+            # Save the image to a file
+            image.save(fn)
         if n < 20:
             print('(%s/%s) epoches finished' % (_+1, n))
 
@@ -62,9 +97,10 @@ def gen_dataset():
 
     choices = get_choices()
 
-    width = 40 + 20 * num_per_image
-    height = 100
-
+#     width = 40 + 20 * num_per_image
+#     height = 100
+    width = 86
+    height = 37
     # meta info
     meta = {
         'num_per_image': num_per_image,
