@@ -107,6 +107,8 @@ optional arguments:
 
 examples:
 
+python3 datasets/gen_captcha.py  -d --npi=4 -n 6 -c 15000
+
 ![](img-doc/data-set-example.png)
 
 #### Example 1: 4 chars per captcha, use digits only
